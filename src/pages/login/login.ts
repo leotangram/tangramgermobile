@@ -1,9 +1,10 @@
 import { Component } from '@angular/core';
 import { NavController, NavParams, ToastController } from 'ionic-angular';
-import {HomePage} from "../home/home";
-import {Status, User} from "../../interfaces/user";
-import {AuthService} from "../../services/auth";
-import {UserService} from "../../services/user";
+import { HomePage } from "../home/home";
+import { Status, User } from "../../interfaces/user";
+import { AuthService } from "../../services/auth";
+import { UserService } from "../../services/user";
+import { ProfilePage } from '../profile/profile';
 
 /**
  * Generated class for the LoginPage page.
@@ -26,7 +27,7 @@ export class LoginPage {
   constructor(public navCtrl: NavController, public navParams: NavParams, public authService: AuthService, public userService: UserService, private toastCtrl: ToastController) {
   }
   registerWithEmail() {
-    if(this.password !== this.password2) {
+    if (this.password !== this.password2) {
       alert('Las contraseñas no coinciden');
       return;
     }
@@ -64,44 +65,7 @@ export class LoginPage {
         position: 'bottom'
       });
       toast.present();
-      this.navCtrl.setRoot(HomePage);
-    }).catch((error) => {
-      alert('Ocurrió un error');
-      console.log(error);
-    })
-  }
-  facebookAuth() {
-    this.authService.facebookAuth().then((data) => {
-      console.log(data);
-      const user: User = {
-        nick: data.user.displayName,
-        email: data.user.email,
-        status: Status.Online,
-        uid: data.user.uid,
-        active: true
-      };
-      if(data.additionalUserInfo.isNewUser) {
-        this.userService.add(user).then((data) => {
-          let toast = this.toastCtrl.create({
-            message: 'Conectado a Facebook con éxito',
-            duration: 3000,
-            position: 'bottom'
-          });
-          toast.present();
-          this.navCtrl.setRoot(HomePage);
-        }).catch((error) => {
-          alert('Ocurrió un error');
-          console.log(error);
-        });
-      }else {
-        let toast = this.toastCtrl.create({
-          message: 'Facebook Login Exitoso',
-          duration: 3000,
-          position: 'bottom'
-        });
-        toast.present();
-        this.navCtrl.setRoot(HomePage);
-      }
+      this.navCtrl.setRoot(ProfilePage);
     }).catch((error) => {
       alert('Ocurrió un error');
       console.log(error);
@@ -116,5 +80,40 @@ export class LoginPage {
   backToHome() {
     this.navCtrl.pop();
   }
-
+  loginWithFacebook() {
+    this.authService.facebookLogin().then((data: any) => {
+      //user.uid additionalUserInfo.isNewUser additionalUserInfo.picture.data.url additionalUserInfo.first_name additionalUserInfo.last_name additionalUserInfo.profile.email
+      if (data.additionalUserInfo.isNewUser) {
+        const user: User = {
+          nick: data.additionalUserInfo.profile.first_name + ' ' + data.additionalUserInfo.profile.last_name,
+          active: true,
+          status: Status.Online,
+          uid: data.user.uid,
+          email: data.additionalUserInfo.profile.email
+        };
+        this.userService.add(user).then((data) => {
+          let toast = this.toastCtrl.create({
+            message: 'Bienvenido (Registro Exitoso)',
+            duration: 3000,
+            position: 'bottom'
+          });
+          toast.present();
+          this.navCtrl.setRoot(HomePage);
+        }).catch((error) => {
+          console.log(error);
+        });
+      } else {
+        let toast = this.toastCtrl.create({
+          message: 'Bienvenido',
+          duration: 3000,
+          position: 'bottom'
+        });
+        toast.present();
+        this.navCtrl.setRoot(HomePage);
+      }
+      console.log(data);
+    }).catch((error) => {
+      console.log(error);
+    });
+  }
 }
